@@ -15,6 +15,9 @@ Allocator::Allocator(size_t block_size, size_t block_count) {
     for (size_t i = 0; i < block_count; i++) {
         Block* block = reinterpret_cast<Block*>(start + (i * m_MemoryPool->block_size));
         block->next = m_MemoryPool->free_list;
+#ifdef DEBUG
+        block->is_free = false;
+#endif
         m_MemoryPool->free_list = block;
     }
     m_Initialized = true;

@@ -7,6 +7,9 @@ class Allocator {
    private:
     typedef struct Block {
         Block* next;
+#ifdef DEBUG
+        bool is_free;
+#endif
     } Block;
     typedef struct MemoryPool {
         void* memory;
@@ -23,5 +26,4 @@ class Allocator {
     void free(void* block);
     Allocator(size_t block_size, size_t block_count);
     ~Allocator();
-
 };

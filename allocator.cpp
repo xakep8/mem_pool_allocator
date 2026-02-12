@@ -34,6 +34,9 @@ void* Allocator::allocate() {
     }
     Block* block = m_MemoryPool->free_list;
     m_MemoryPool->free_list = block->next;
+#ifdef DEBUG
+    block->is_free = false;
+#endif
     return block;
 }
 
@@ -41,7 +44,11 @@ void Allocator::free(void* ptr) {
     if (ptr == nullptr) return;
     Block* block = static_cast<Block*>(ptr);
 #ifdef DEBUG
-    memset(block, 0xDD, m_MemoryPool->block_size);
+    if (block->is_free) {
+        std::cerr << "Double free error\n";
+        throw std::abort();
+    }
+    block->is_free = true;
 #endif
     block->next = m_MemoryPool->free_list;
     m_MemoryPool->free_list = block;

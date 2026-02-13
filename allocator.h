@@ -9,6 +9,7 @@ class Allocator {
         Block* next;
 #ifdef DEBUG
         bool is_free;
+        uint32_t pool_id;
 #endif
     } Block;
     typedef struct MemoryPool {
@@ -19,6 +20,9 @@ class Allocator {
     } MemoryPool;
     bool m_Initialized;
     std::unique_ptr<MemoryPool> m_MemoryPool;
+#ifdef DEBUG
+    uint32_t m_PoolId;
+#endif
 
    public:
     bool is_initialized() const { return m_Initialized; }

@@ -1,6 +1,7 @@
 #include "allocator.h"
 
 #include <iostream>
+#include <memory>
 
 Allocator::Allocator(size_t block_size, size_t block_count) {
     if (block_size == 0 || block_count == 0) {
@@ -24,7 +25,7 @@ Allocator::Allocator(size_t block_size, size_t block_count) {
 #endif
     char* start = reinterpret_cast<char*>(m_MemoryPool->memory);
     for (size_t i = 0; i < block_count; i++) {
-        Block* block = reinterpret_cast<Block*>(start + (i * m_MemoryPool->block_size));
+        Block* block = std::construct_at(reinterpret_cast<Block*>(start + (i * m_MemoryPool->block_size)));
         block->next = m_MemoryPool->free_list;
 #ifdef DEBUG
         block->is_free = true;

@@ -25,7 +25,8 @@ The allocator maintains a pool of fixed-size memory blocks organized as a singly
 ### Prerequisites
 
 - CMake 3.10 or higher
-- C++17 compatible compiler (GCC, Clang, MSVC)
+- C++20 compatible compiler (GCC, Clang, MSVC)
+- GoogleTest (fetched automatically via CMake)
 
 ### Build Instructions
 
@@ -44,7 +45,19 @@ cmake ..
 make
 ```
 
-The executable will be generated at `bin/mem_pool_allocator`.
+This will build:
+- Main executable: `bin/mem_pool_allocator`
+- Test executable: `tests/bin/mem_pool_allocator_tests`
+
+#### Running Tests
+
+```bash
+make test
+# or run the test executable directly:
+./tests/bin/mem_pool_allocator_tests
+```
+
+The test executable is compiled with AddressSanitizer enabled for memory safety checks.
 
 ## Usage
 

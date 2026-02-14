@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <atomic>
 #include <random>
+#include <thread>
 #include <vector>
 
 #include "allocator.h"
@@ -175,4 +177,32 @@ TEST(AllocatorDeathTests, MisalignedFree) {
 
     EXPECT_DEATH(alloc.free(bad_ptr), "not block aligned");
 #endif
+}
+
+TEST(AllocatorThreadTests, ConcurrentAllocFree) {
+    Allocator alloc(128, 100);
+    std::atomic<bool> failed{false};
+
+    auto worker = [&]() {
+        for (int i = 0; i < 1000; ++i) {
+            void* p = alloc.allocate();
+            if (!p) {
+                failed = true;
+                return;
+            }
+            alloc.free(p);
+        }
+    };
+
+    std::thread t1(worker);
+    std::thread t2(worker);
+    std::thread t3(worker);
+    std::thread t4(worker);
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+
+    EXPECT_FALSE(failed.load());
 }

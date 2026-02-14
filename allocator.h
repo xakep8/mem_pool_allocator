@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <mutex>
 
 class Allocator {
    private:
@@ -20,6 +21,7 @@ class Allocator {
     } MemoryPool;
     bool m_Initialized;
     std::unique_ptr<MemoryPool> m_MemoryPool;
+    std::mutex m_Mutex;
 #ifdef DEBUG
     uint32_t m_PoolId;
 #endif

@@ -45,6 +45,7 @@ Allocator::~Allocator() {
 }
 
 void* Allocator::allocate() {
+    std::lock_guard<std::mutex> lock(m_Mutex);
     if (!m_Initialized || !m_MemoryPool) return nullptr;
 
     if (m_MemoryPool->free_list == nullptr) {
@@ -65,6 +66,7 @@ void* Allocator::allocate() {
 void Allocator::free(void* ptr) {
     if (ptr == nullptr) return;
 
+    std::lock_guard<std::mutex> lock(m_Mutex);
     if (!m_Initialized || !m_MemoryPool) return;
 
     char* mem_start = static_cast<char*>(m_MemoryPool->memory);

@@ -257,3 +257,27 @@ TEST(SlabAllocatorTests, ReuseWorks) {
 
     EXPECT_EQ(p, p2);
 }
+
+TEST(AllocatorDeathTests, BufferOverflowDetected) {
+#ifdef DEBUG
+    Allocator alloc(128, 1);
+
+    char* p = static_cast<char*>(alloc.allocate());
+    ASSERT_NE(p, nullptr);
+
+    memset(p, 0xAA, 140);  // overflow
+
+    EXPECT_DEATH(alloc.free(p), "Memory corruption");
+#endif
+}
+
+TEST(AllocatorTests, CanarySurvivesValidUsage) {
+    Allocator alloc(128, 1);
+
+    char* p = static_cast<char*>(alloc.allocate());
+    ASSERT_NE(p, nullptr);
+
+    memset(p, 0xAA, 100);  // safe
+
+    EXPECT_NO_THROW(alloc.free(p));
+}

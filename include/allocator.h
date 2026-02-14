@@ -4,6 +4,8 @@
 #include <memory>
 #include <mutex>
 
+constexpr uint32_t CANARY_VALUE = 0xDEADC0DE;
+
 class Allocator {
    private:
     typedef struct Block {
@@ -11,6 +13,7 @@ class Allocator {
 #ifdef DEBUG
         bool is_free;
         uint32_t pool_id;
+        uint32_t canary_front;
 #endif
     } Block;
     typedef struct MemoryPool {

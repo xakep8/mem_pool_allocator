@@ -13,6 +13,9 @@ Allocator::Allocator(size_t block_size, size_t block_count) {
     m_MemoryPool->block_count = block_count;
     size_t alignment = alignof(Block);
     block_size = std::max(block_size, sizeof(Block));
+#ifdef DEBUG
+    block_size += sizeof(uint32_t);
+#endif
     block_size = (block_size + alignment - 1) & ~(alignment - 1);
     m_MemoryPool->block_size = block_size;
     m_MemoryPool->memory = std::malloc(m_MemoryPool->block_size * block_count);
@@ -30,6 +33,11 @@ Allocator::Allocator(size_t block_size, size_t block_count) {
 #ifdef DEBUG
         block->is_free = true;
         block->pool_id = m_PoolId;
+        block->canary_front = CANARY_VALUE;
+
+        uint32_t* rear =
+            reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(block) + m_MemoryPool->block_size - sizeof(uint32_t));
+        *rear = CANARY_VALUE;
 #endif
         m_MemoryPool->free_list = block;
     }
@@ -59,8 +67,13 @@ void* Allocator::allocate() {
         std::abort();
     }
     block->is_free = false;
+    block->canary_front = CANARY_VALUE;
+
+    uint32_t* rear =
+        reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(block) + m_MemoryPool->block_size - sizeof(uint32_t));
+    *rear = CANARY_VALUE;
 #endif
-    return block;
+    return reinterpret_cast<char*>(block) + sizeof(Block);
 }
 
 void Allocator::free(void* ptr) {
@@ -72,19 +85,22 @@ void Allocator::free(void* ptr) {
     char* mem_start = static_cast<char*>(m_MemoryPool->memory);
     char* mem_end = mem_start + (m_MemoryPool->block_size * m_MemoryPool->block_count);
 
-    if (ptr < mem_start || ptr >= mem_end) {
+    char* raw_ptr = reinterpret_cast<char*>(ptr);
+    char* block_ptr = raw_ptr - sizeof(Block);
+
+    if (block_ptr < mem_start || block_ptr >= mem_end) {
         std::cerr << "Invalid free (pointer not from pool)\n";
         std::abort();
     }
 
-    std::ptrdiff_t offset = static_cast<char*>(ptr) - mem_start;
+    std::ptrdiff_t offset = block_ptr - mem_start;
 
     if (offset % m_MemoryPool->block_size != 0) {
         std::cerr << "Invalid free (not block aligned)\n";
         std::abort();
     }
 
-    Block* block = static_cast<Block*>(ptr);
+    Block* block = reinterpret_cast<Block*>(block_ptr);
 #ifdef DEBUG
     if (block->pool_id != m_PoolId) {
         std::cerr << "Invalid free (wrong allocator)\n";
@@ -92,6 +108,13 @@ void Allocator::free(void* ptr) {
     }
     if (block->is_free) {
         std::cerr << "Double free error\n";
+        std::abort();
+    }
+    uint32_t* rear =
+        reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(block) + m_MemoryPool->block_size - sizeof(uint32_t));
+
+    if (block->canary_front != CANARY_VALUE || *rear != CANARY_VALUE) {
+        std::cerr << "Memory corruption detected (canary smashed)\n";
         std::abort();
     }
     block->is_free = true;

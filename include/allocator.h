@@ -20,6 +20,7 @@ class Allocator {
         void* memory;
         Block* free_list;
         size_t block_size;
+        size_t payload_size;
         size_t block_count;
     } MemoryPool;
     bool m_Initialized;
@@ -32,8 +33,12 @@ class Allocator {
    public:
     bool is_initialized() const { return m_Initialized; }
     size_t block_size() const { return m_MemoryPool->block_size; }
+    size_t usable_size() const { return m_MemoryPool->payload_size; }
     void* allocate();
     void free(void* ptr);
     Allocator(size_t block_size, size_t block_count);
     ~Allocator();
+
+   private:
+    size_t align_up(size_t size);
 };

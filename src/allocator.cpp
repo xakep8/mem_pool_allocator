@@ -3,6 +3,11 @@
 #include <iostream>
 #include <memory>
 
+size_t Allocator::align_up(size_t size) {
+    constexpr size_t alignment = alignof(Block);
+    return (size + alignment - 1) & ~(alignment - 1);
+}
+
 Allocator::Allocator(size_t block_size, size_t block_count) {
     if (block_size == 0 || block_count == 0) {
         m_Initialized = false;
@@ -11,13 +16,17 @@ Allocator::Allocator(size_t block_size, size_t block_count) {
 
     m_MemoryPool = std::make_unique<MemoryPool>();
     m_MemoryPool->block_count = block_count;
-    size_t alignment = alignof(Block);
-    block_size = std::max(block_size, sizeof(Block));
+    size_t payload_size = block_size;
+    size_t raw_block_size = sizeof(Block) + payload_size;
+
 #ifdef DEBUG
-    block_size += sizeof(uint32_t);
+    raw_block_size += sizeof(uint32_t);
 #endif
-    block_size = (block_size + alignment - 1) & ~(alignment - 1);
-    m_MemoryPool->block_size = block_size;
+
+    raw_block_size = align_up(raw_block_size);
+
+    m_MemoryPool->block_size = raw_block_size;
+    m_MemoryPool->payload_size = payload_size;
     m_MemoryPool->memory = std::malloc(m_MemoryPool->block_size * block_count);
     if (!m_MemoryPool->memory) {
         m_Initialized = false;

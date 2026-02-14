@@ -66,3 +66,24 @@ set_target_properties(${PROJECT_NAME}_tests PROPERTIES
 )
 
 #-------------------------------------------------
+
+#--------------BenchMark executable---------------
+
+add_executable(allocator_bench
+    benchmarks/benchmark_allocator.cpp
+    src/allocator.cpp
+    src/allocator_slab.cpp
+)
+
+target_include_directories(allocator_bench
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_compile_options(allocator_bench
+    PRIVATE -O3
+)
+set_target_properties(allocator_bench PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/bin
+)
+
+#-------------------------------------------------

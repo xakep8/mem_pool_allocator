@@ -28,8 +28,9 @@ class Allocator {
 
    public:
     bool is_initialized() const { return m_Initialized; }
+    size_t block_size() const { return m_MemoryPool->block_size; }
     void* allocate();
-    void free(void* block);
+    void free(void* ptr);
     Allocator(size_t block_size, size_t block_count);
     ~Allocator();
 };

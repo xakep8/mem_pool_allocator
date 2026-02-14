@@ -19,11 +19,11 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(${PROJECT_NAME}
     main.cpp
-    allocator.cpp
+    src/allocator.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 target_compile_options(${PROJECT_NAME}
@@ -40,8 +40,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 
 add_executable(${PROJECT_NAME}_tests
-    allocator.cpp
+    src/allocator.cpp
     tests/test_allocator.cpp
+    src/allocator_slab.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_tests
@@ -49,7 +50,7 @@ target_link_libraries(${PROJECT_NAME}_tests
 )
 
 target_include_directories(${PROJECT_NAME}_tests
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 target_compile_definitions(${PROJECT_NAME}_tests PRIVATE DEBUG)

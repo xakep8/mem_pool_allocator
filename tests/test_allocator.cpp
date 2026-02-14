@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "allocator.h"
+#include "allocator_slab.h"
 
 TEST(AllocatorTests, ExhaustsPoolCorrectly) {
     Allocator alloc(128, 10);
@@ -205,4 +206,54 @@ TEST(AllocatorThreadTests, ConcurrentAllocFree) {
     t4.join();
 
     EXPECT_FALSE(failed.load());
+}
+
+TEST(AllocatorThreadTests, PerThreadPoolsNoContention) {
+    std::atomic<bool> failed{false};
+
+    auto worker = [&]() {
+        thread_local Allocator alloc(128, 50);
+
+        for (int i = 0; i < 1000; ++i) {
+            void* p = alloc.allocate();
+            if (!p) {
+                failed = true;
+                return;
+            }
+            alloc.free(p);
+        }
+    };
+
+    std::thread t1(worker);
+    std::thread t2(worker);
+    std::thread t3(worker);
+    std::thread t4(worker);
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+
+    EXPECT_FALSE(failed.load());
+}
+
+TEST(SlabAllocatorTests, SelectsCorrectSlab) {
+    SlabAllocator alloc;
+
+    void* p1 = alloc.allocate(50);   // should hit 64B slab
+    void* p2 = alloc.allocate(100);  // 128B slab
+
+    EXPECT_NE(p1, nullptr);
+    EXPECT_NE(p2, nullptr);
+}
+
+TEST(SlabAllocatorTests, ReuseWorks) {
+    SlabAllocator alloc;
+
+    void* p = alloc.allocate(60);
+    alloc.free(p, 60);
+
+    void* p2 = alloc.allocate(60);
+
+    EXPECT_EQ(p, p2);
 }

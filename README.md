@@ -27,37 +27,70 @@ The allocator maintains a pool of fixed-size memory blocks organized as a singly
 
 ### Prerequisites
 
-- CMake 3.10 or higher
+- CMake 3.13 or higher
 - C++20 compatible compiler (GCC, Clang, MSVC)
-- GoogleTest (fetched automatically via CMake)
+- GoogleTest is fetched automatically only when allocator tests are enabled
 
 ### Build Instructions
 
-#### Using the build script (Linux/macOS):
+#### As part of Klang
+
+The top-level Klang CMake build adds this directory with `add_subdirectory(mem_pool_allocator)` and links `mem_pool_allocator_lib` into `klang_core`.
+
+When built from the Klang repository root, only the static library is enabled by default:
+
+```bash
+cmake -S . -B build
+cmake --build build --target klang_core
+```
+
+#### Standalone build
+
+When configured directly from the `mem_pool_allocator` directory, the allocator builds the library plus the example executable, tests, and benchmark by default:
+
+```bash
+cmake -S . -B build
+cmake --build build
+```
+
+This can build:
+
+- Static library: `lib/libmem_pool_allocator_lib.a`
+- Example executable: `bin/mem_pool_allocator_executable`
+- Test executable: `tests/bin/mem_pool_allocator_tests`
+- Benchmark executable: `benchmarks/bin/allocator_bench`
+
+#### Build options
+
+The optional targets can be toggled with CMake options:
+
+```bash
+cmake -S . -B build \
+  -DMEM_POOL_ALLOCATOR_BUILD_EXAMPLE=ON \
+  -DMEM_POOL_ALLOCATOR_BUILD_TESTS=ON \
+  -DMEM_POOL_ALLOCATOR_BUILD_BENCHMARKS=ON
+```
+
+Options:
+
+- `MEM_POOL_ALLOCATOR_BUILD_EXAMPLE`: builds the example executable
+- `MEM_POOL_ALLOCATOR_BUILD_TESTS`: builds tests and fetches GoogleTest
+- `MEM_POOL_ALLOCATOR_BUILD_BENCHMARKS`: builds the benchmark executable
+
+When included by another CMake project, all three options default to `OFF`. When configured standalone, all three default to `ON`.
+
+#### Using the build script
 
 ```bash
 chmod +x build.sh
 ./build.sh
 ```
 
-#### Using CMake directly:
-
-```bash
-mkdir out && cd out
-cmake ..
-make
-```
-
-This will build:
-- Main executable: `bin/mem_pool_allocator`
-- Test executable: `tests/bin/mem_pool_allocator_tests`
-- Benchmark executable: `benchmarks/bin/allocator_bench`
-
 #### Running Tests
 
 ```bash
-make test
-# or run the test executable directly:
+cmake -S . -B build -DMEM_POOL_ALLOCATOR_BUILD_TESTS=ON
+cmake --build build --target mem_pool_allocator_tests
 ./tests/bin/mem_pool_allocator_tests
 ```
 
@@ -66,6 +99,8 @@ The test executable is compiled with AddressSanitizer enabled for memory safety 
 #### Running Benchmarks
 
 ```bash
+cmake -S . -B build -DMEM_POOL_ALLOCATOR_BUILD_BENCHMARKS=ON
+cmake --build build --target allocator_bench
 ./benchmarks/bin/allocator_bench
 ```
 
